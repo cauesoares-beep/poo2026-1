@@ -111,3 +111,167 @@ questao (3); metodos de classe
 
     amigo.setAmigoSorteado(emailAmigoSorteado);
 }
+
+3- public List<Mensagem> pesquisaTodasAsMensagens() {
+    return mensagens;
+}
+
+4 - public String pesquisaAmigoSecretoDe(String emailDaPessoa)
+        throws AmigoInexistenteException,
+               AmigoNaoSorteadoException {
+
+    Amigo amigo = pesquisaAmigo(emailDaPessoa);
+
+    if (amigo == null) {
+        throw new AmigoInexistenteException(
+                "Amigo inexistente");
+    }
+
+    if (amigo.getEmailAmigoSorteado() == null) {
+        throw new AmigoNaoSorteadoException(
+                "Amigo ainda não sorteado");
+    }
+
+    return amigo.getEmailAmigoSorteado();
+}
+
+questao (4)
+
+import java.util.List;
+
+public class TestaSistemaAmigo {
+
+    public static void main(String[] args) {
+
+        SistemaAmigo sistema = new SistemaAmigo();
+
+        sistema.cadastraAmigo(
+                "Jose",
+                "jose@email.com");
+
+        sistema.cadastraAmigo(
+                "Maria",
+                "maria@email.com");
+
+        try {
+
+            sistema.configuraAmigoSecretoDe(
+                    "jose@email.com",
+                    "maria@email.com");
+
+            sistema.configuraAmigoSecretoDe(
+                    "maria@email.com",
+                    "jose@email.com");
+
+        } catch (AmigoInexistenteException e) {
+
+            System.out.println(e.getMessage());
+        }
+
+        sistema.enviarMensagemParaAlguem(
+                "Oi José!",
+                "maria@email.com",
+                "jose@email.com",
+                true);
+
+        sistema.enviarMensagemParaTodos(
+                "Boa sorte para todos!",
+                "maria@email.com",
+                true);
+
+        List<Mensagem> anonimas =
+                sistema.pesquisaMensagensAnonimas();
+
+        for (Mensagem m : anonimas) {
+
+            System.out.println(
+                    m.getTextoCompletoAExibir());
+        }
+
+        try {
+
+            String amigo =
+                    sistema.pesquisaAmigoSecretoDe(
+                            "jose@email.com");
+
+            if (amigo.equals("maria@email.com")) {
+                System.out.println("Ok");
+            }
+
+        } catch (Exception e) {
+
+            System.out.println(e.getMessage());
+        }
+    }
+}
+
+questao (5)
+
+import java.util.Scanner;
+
+public class TestaSistemaAmigoGUI {
+
+    public static void main(String[] args) {
+
+        Scanner sc = new Scanner(System.in);
+
+        SistemaAmigo sistema = new SistemaAmigo();
+
+        System.out.print("Quantidade de amigos: ");
+        int qtd = Integer.parseInt(sc.nextLine());
+
+        for (int i = 0; i < qtd; i++) {
+
+            System.out.println("\nAmigo " + (i + 1));
+
+            System.out.print("Nome: ");
+            String nome = sc.nextLine();
+
+            System.out.print("Email: ");
+            String email = sc.nextLine();
+
+            sistema.cadastraAmigo(nome, email);
+        }
+
+        System.out.println("\n===== SORTEIO =====");
+
+        for (int i = 0; i < qtd; i++) {
+
+            System.out.print("Email da pessoa: ");
+            String pessoa = sc.nextLine();
+
+            System.out.print("Email do amigo sorteado: ");
+            String sorteado = sc.nextLine();
+
+            try {
+
+                sistema.configuraAmigoSecretoDe(
+                        pessoa,
+                        sorteado);
+
+            } catch (AmigoInexistenteException e) {
+
+                System.out.println(e.getMessage());
+            }
+        }
+
+        System.out.println("\n===== MENSAGEM =====");
+
+        System.out.print("Remetente: ");
+        String remetente = sc.nextLine();
+
+        System.out.print("Texto: ");
+        String texto = sc.nextLine();
+
+        System.out.print("Anonima? (true/false): ");
+        boolean anonima =
+                Boolean.parseBoolean(sc.nextLine());
+
+        sistema.enviarMensagemParaTodos(
+                texto,
+                remetente,
+                anonima);
+
+        System.out.println("Mensagem enviada!");
+    }
+}
