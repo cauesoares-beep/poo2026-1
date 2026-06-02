@@ -1,117 +1,200 @@
 package br.ufpb.dcx.amigosecreto;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.util.List;
-import java.util.Map;
 
-public class SistemaAmigoMap {
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-    private Map<String, Amigo> amigos;
-    private List<Mensagem> mensagens;
+public class SistemaAmigoMapTest {
 
-    public SistemaAmigoMap() {
-        this.amigos = new HashMap<>();
-        this.mensagens = new ArrayList<>();
+    private SistemaAmigoMap sistema;
+
+    @BeforeEach
+    void setUp() {
+        this.sistema = new SistemaAmigoMap();
     }
 
-    public void cadastraAmigo(String nomeAmigo, String emailAmigo)
-            throws AmigoJaExisteException {
+    @Test
+    void testSistemaAmigoMap() {
+        assertTrue(sistema.pesquisaTodasAsMensagens().isEmpty());
 
-        if (amigos.containsKey(emailAmigo)) {
-            throw new AmigoJaExisteException(
-                    "Já existe amigo com este e-mail");
+        assertThrows(
+                AmigoInexistenteException.class,
+                () -> sistema.pesquisaAmigo("ayla@teste.com"));
+    }
+
+    @Test
+    void testPesquisaECadastraAmigo() {
+
+        try {
+            sistema.pesquisaAmigo("ayla@teste.com");
+            fail("Deveria falhar pois não existe ainda");
+        } catch (AmigoInexistenteException e) {
+            // OK
         }
 
-        amigos.put(emailAmigo,
-                new Amigo(nomeAmigo, emailAmigo));
-    }
+        try {
+            sistema.cadastraAmigo("ayla", "ayla@teste.com");
 
-    public Amigo pesquisaAmigo(String emailAmigo)
-            throws AmigoInexistenteException {
+            Amigo a =
+                    sistema.pesquisaAmigo("ayla@teste.com");
 
-        Amigo amigo = amigos.get(emailAmigo);
+            assertEquals("ayla", a.getNome());
+            assertEquals("ayla@teste.com", a.getEmail());
 
-        if (amigo == null) {
-            throw new AmigoInexistenteException(
-                    "Amigo não encontrado");
+        } catch (AmigoJaExisteException |
+                 AmigoInexistenteException e) {
+
+            fail("Não deveria lançar exceção");
         }
-
-        return amigo;
     }
 
-    public void enviarMensagemParaTodos(
-            String texto,
-            String emailRemetente,
-            boolean ehAnonima) {
+    @Test
+    void testEnviarMensagemParaTodos() {
 
-        mensagens.add(
-                new MensagemParaTodos(
-                        texto,
-                        emailRemetente,
-                        ehAnonima));
+        assertTrue(
+                sistema.pesquisaTodasAsMensagens().isEmpty());
+
+        sistema.enviarMensagemParaTodos(
+                "texto",
+                "ayla@dcx.ufpb.br",
+                true);
+
+        List<Mensagem> mensagens =
+                sistema.pesquisaTodasAsMensagens();
+
+        assertEquals(1, mensagens.size());
+
+        assertEquals(
+                "ayla@dcx.ufpb.br",
+                mensagens.get(0).getEmailRemetente());
     }
 
-    public void enviarMensagemParaAlguem(
-            String texto,
-            String emailRemetente,
-            String emailDestinatario,
-            boolean ehAnonima) {
+    @Test
+    void testEnviarMensagemParaAlguem() {
 
-        mensagens.add(
-                new MensagemParaAlguem(
-                        texto,
-                        emailRemetente,
-                        emailDestinatario,
-                        ehAnonima));
+        assertTrue(
+                sistema.pesquisaTodasAsMensagens().isEmpty());
+
+        sistema.enviarMensagemParaAlguem(
+                "texto",
+                "ayla@dcx.ufpb.br",
+                "rodrigo@dcx.ufpb.br",
+                true);
+
+        List<Mensagem> mensagens =
+                sistema.pesquisaTodasAsMensagens();
+
+        assertEquals(1, mensagens.size());
+
+        assertTrue(
+                mensagens.get(0)
+                        instanceof MensagemParaAlguem);
+
+        assertEquals(
+                "texto",
+                mensagens.get(0).getTexto());
     }
 
-    public List<Mensagem> pesquisaMensagensAnonimas() {
+    @Test
+    void testPesquisaMensagensAnonimas() {
 
-        List<Mensagem> anonimas =
-                new ArrayList<>();
+        assertTrue(
+                sistema.pesquisaTodasAsMensagens().isEmpty());
 
-        for (Mensagem m : mensagens) {
+        sistema.enviarMensagemParaAlguem(
+                "texto 1",
+                "ayla@dcx.ufpb.br",
+                "rodrigo@dcx.ufpb.br",
+                false);
 
-            if (m.ehAnonima()) {
-                anonimas.add(m);
-            }
+        assertTrue(
+                sistema.pesquisaMensagensAnonimas().isEmpty());
+
+        sistema.enviarMensagemParaAlguem(
+                "texto 2",
+                "ayla@dcx.ufpb.br",
+                "rodrigo@dcx.ufpb.br",
+                true);
+
+        assertEquals(
+                1,
+                sistema.pesquisaMensagensAnonimas().size());
+    }
+
+    @Test
+    void testPesquisaTodasAsMensagens() {
+
+        assertTrue(
+                sistema.pesquisaTodasAsMensagens().isEmpty());
+
+        sistema.enviarMensagemParaAlguem(
+                "texto 1",
+                "ayla@dcx.ufpb.br",
+                "rodrigor@dcx.ufpb.br",
+                false);
+
+        assertEquals(
+                1,
+                sistema.pesquisaTodasAsMensagens().size());
+
+        sistema.enviarMensagemParaAlguem(
+                "texto 2",
+                "ayla@dcx.ufpb.br",
+                "rodrigor@dcx.ufpb.br",
+                true);
+
+        assertEquals(
+                2,
+                sistema.pesquisaTodasAsMensagens().size());
+    }
+
+    @Test
+    void testPesquisaAmigoEConfiguraAmigoSecretoDe() {
+
+        assertThrows(
+                AmigoInexistenteException.class,
+                () -> sistema.pesquisaAmigoSecretoDe(
+                        "ayla@dcx.ufpb.br"));
+
+        try {
+
+            sistema.cadastraAmigo(
+                    "Ayla",
+                    "ayla@dcx.ufpb.br");
+
+            sistema.cadastraAmigo(
+                    "Ana",
+                    "ana@dcx.ufpb.br");
+
+            sistema.configuraAmigoSecretoDe(
+                    "ayla@dcx.ufpb.br",
+                    "ana@dcx.ufpb.br");
+
+            sistema.configuraAmigoSecretoDe(
+                    "ana@dcx.ufpb.br",
+                    "ayla@dcx.ufpb.br");
+
+            assertEquals(
+                    "ana@dcx.ufpb.br",
+                    sistema.pesquisaAmigoSecretoDe(
+                            "ayla@dcx.ufpb.br"));
+
+            assertEquals(
+                    "ayla@dcx.ufpb.br",
+                    sistema.pesquisaAmigoSecretoDe(
+                            "ana@dcx.ufpb.br"));
+
+        } catch (AmigoInexistenteException |
+                 AmigoJaExisteException |
+                 AmigoNaoSorteadoException e) {
+
+            fail("Não deveria lançar exceção");
         }
-
-        return anonimas;
-    }
-
-    public List<Mensagem> pesquisaTodasAsMensagens() {
-        return mensagens;
-    }
-
-    public void configuraAmigoSecretoDe(
-            String emailDaPessoa,
-            String emailAmigoSorteado)
-            throws AmigoInexistenteException {
-
-        Amigo amigo =
-                pesquisaAmigo(emailDaPessoa);
-
-        amigo.setAmigoSorteado(
-                emailAmigoSorteado);
-    }
-
-    public String pesquisaAmigoSecretoDe(
-            String emailDaPessoa)
-            throws AmigoInexistenteException,
-                   AmigoNaoSorteadoException {
-
-        Amigo amigo =
-                pesquisaAmigo(emailDaPessoa);
-
-        if (amigo.getEmailAmigoSorteado()
-                == null) {
-
-            throw new AmigoNaoSorteadoException(
-                    "Amigo não sorteado");
-        }
-
-        return amigo.getEmailAmigoSorteado();
     }
 }
