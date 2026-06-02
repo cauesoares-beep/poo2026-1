@@ -1,34 +1,40 @@
-public abstract class Mensagem {
+public class MensagemParaAlguem extends Mensagem {
 
-    private String texto;
-    private String emailRemetente;
-    private boolean anonima;
+    private String emailDestinatario;
 
-    public Mensagem(String texto, String emailRemetente, boolean anonima) {
-        this.texto = texto;
-        this.emailRemetente = emailRemetente;
-        this.anonima = anonima;
+    public MensagemParaAlguem(String texto,
+                              String emailRemetente,
+                              String emailDestinatario,
+                              boolean anonima) {
+
+        super(texto, emailRemetente, anonima);
+        this.emailDestinatario = emailDestinatario;
     }
 
-    public String getTexto() {
-        return texto;
+    public String getEmailDestinatario() {
+        return emailDestinatario;
     }
 
-    public void setTexto(String texto) {
-        this.texto = texto;
+    public void setEmailDestinatario(String emailDestinatario) {
+        this.emailDestinatario = emailDestinatario;
     }
 
-    public String getEmailRemetente() {
-        return emailRemetente;
-    }
+    @Override
+    public String getTextoCompletoAExibir() {
 
-    public void setEmailRemetente(String emailRemetente) {
-        this.emailRemetente = emailRemetente;
-    }
+        if (ehAnonima()) {
 
-    public boolean ehAnonima() {
-        return anonima;
-    }
+            return "Mensagem para "
+                    + emailDestinatario
+                    + ". Texto: "
+                    + getTexto();
+        }
 
-    public abstract String getTextoCompletoAExibir();
+        return "Mensagem de: "
+                + getEmailRemetente()
+                + " para "
+                + emailDestinatario
+                + ". Texto: "
+                + getTexto();
+    }
 }
